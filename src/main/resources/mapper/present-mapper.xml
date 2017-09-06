@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>  
+<!DOCTYPE mapper  
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">  
+<mapper namespace="com.lanou.cn.mapper.PresentMapper">
+
+    <select id="getSaleCon" resultType="Map">
+        select
+        id
+        ,con_no conNo
+        ,con_name conName
+        from
+          sale_con
+        where
+        con_type='20'
+        order by id asc
+    </select>
+    <select id="getisGifts" resultType="Map">
+        select
+        id
+        ,prd_no prdNo
+        ,prd_name prdName
+        from
+        prd_bsc
+        where
+        is_gifts='20' or is_gifts='30'
+        order by id asc
+    </select>
+    <insert id="addPresent" parameterType="Map">
+        INSERT INTO
+        slgf_info (
+        g_no
+        ,g_name
+        ,con_no
+        ,g_prd_no
+        ,inst_date
+        ,inst_id
+        )
+        VALUES
+        (
+        (SELECT g.no FROM (SELECT concat('100',ifnull(max(id),0) + 1) no FROM slgf_info) g)
+        ,#{gName}
+        ,#{conNo}
+        ,#{gPrdNo}
+        ,now()
+        ,#{uId}
+        )
+    </insert>
+    <select id="findZenglist" resultType="Map">
+       SELECT
+        id
+        ,prd_no prdNo
+        ,prd_name prdName
+        from
+        prd_bsc
+        where
+        tp_cd=#{tpCd}
+        order by id asc
+    </select>
+    <select id="getCdName" resultType="Map">
+        select
+        id
+        ,tp_cd tpCd
+        ,tp_nm tpName
+        from
+        prd_type
+        order by id asc
+    </select>
+    <select id="getBuyZeng" resultType="Map">
+        SELECT
+         slgf.g_no gNo
+        ,slgf.g_name gName
+        ,salecon.con_name conName
+        ,slgf.g_prd_no gPrdNo
+        from
+        slgf_info slgf,
+        sale_con salecon
+        where 1=1
+        and salecon.con_no=slgf.con_no
+        <if test="null != params.gName and '' != params.gName and ' '.toString() != params.gName">
+        AND slgf.g_name=#{params.gName}
+        </if>
+        <if test="null != params.conNo and '' != params.conNo and ' '.toString() != params.conNo">
+        AND slgf.con_no=#{params.conNo}
+        </if>
+        <if test="null != params.prdNo and '' != params.prdNo and ' '.toString() != params.prdNo">
+            AND slgf.g_prd_no=#{params.prdNo}
+        </if>
+    </select>
+    <update id="updateBuy">
+        UPDATE
+          slgf_info
+          SET
+          g_name=#{params.gName}
+        <if test="null != params.conNo and '' != params.conNo and ' '.toString() != params.conNo">
+          ,con_no=#{params.conNo}
+        </if>
+        <if test="null != params.prdNo and '' != params.prdNo and ' '.toString() != params.prdNo">
+          ,g_prd_no=#{params.prdNo}
+        </if>
+          WHERE
+          g_no=#{params.gNo}
+    </update>
+</mapper>  

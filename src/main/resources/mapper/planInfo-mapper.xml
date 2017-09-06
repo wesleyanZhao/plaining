@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8" ?>  
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lanou.cn.mapper.PlanInfoMapper">
+
+    <insert id="addPlanInfoForm" parameterType="Map">
+        <selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id">
+            SELECT LAST_INSERT_ID() as id
+        </selectKey>
+        INSERT INTO pla_bsc(
+             sp_no
+            ,sp_name
+            ,con_no
+            <if test="null != disNo and '' != disNo">
+                ,dis_no
+            </if>
+            <if test="null != gNo and '' != gNo">
+                ,g_no
+            </if>
+            ,lmt_no
+            ,start_date
+            ,end_date
+            ,is_used
+            ,is_return
+            ,inst_date
+            ,inst_id
+        )
+        VALUES (
+             (select pb.spNo from (select concat('100',IFNULL(max(id),0)+1) spNo from pla_bsc) pb)
+            ,#{spName}
+            ,#{conNo}
+            <if test="null != disNo and '' != disNo">
+                ,#{disNo}
+            </if>
+            <if test="null !=gNo and '' != gNo">
+                ,#{gNo}
+            </if>
+            ,#{lmtNo}
+            ,#{startDate}
+            ,#{endDate}
+            ,#{isUsedPB}
+            ,#{isReturn}
+            ,now()
+            ,#{uId}
+        )
+    </insert>
+
+    <insert id="addPlanCpn">
+        INSERT INTO pla_cpn_r
+        (
+             sp_no
+            ,cpn_no
+            ,cpn_content
+            ,use_date_begin
+            ,use_date_end
+            ,inst_date
+            ,inst_id
+        )
+        VALUES
+        (
+             (SELECT sp_no FROM pla_bsc WHERE id = #{params.id})
+            ,#{params.cpnNo}
+            ,#{params.cpnContent}
+            ,#{params.useDateBegin}
+            ,#{params.useDateEnd}
+            ,now()
+            ,#{params.uId}
+        )
+    </insert>
+
+    <insert id="addSaleProR">
+        INSERT INTO sale_pro_r(
+             sp_no
+            ,prd_no
+            ,is_used
+            ,inst_date
+            ,inst_id
+        )
+        VALUES (
+             (SELECT sp_no FROM pla_bsc WHERE id = #{params.id})
+            ,#{params.prdNo}
+            ,#{params.isUsedSPR}
+            ,now()
+            ,#{params.uId}
+        )
+    </insert>
+
+    <select id="planInfoPage" resultType="java.util.HashMap">
+        SELECT
+             pb.id pbId
+            ,pb.sp_no spNo
+            ,pb.sp_name spName
+            ,(SELECT con.con_name FROM sale_con con WHERE pb.con_no=con.con_no) conName
+            /*,pb.con_no conNo*/
+            ,(SELECT pre.dis_name FROM pre_info pre WHERE pb.dis_no=pre.dis_no) disName
+            /*,pb.dis_no disNo*/
+            ,(SELECT slgf.g_name FROM slgf_info slgf WHERE pb.g_no=slgf.g_no) gName
+            /*,pb.g_no gNo*/
+            ,(SELECT lmt.lmt_name FROM lmt_info lmt WHERE pb.lmt_no=lmt.lmt_no) lmtName
+            /*,pb.lmt_no lmtNo*/
+            ,(SELECT pcr.cpn_no FROM pla_cpn_r pcr WHERE pb.sp_no=pcr.sp_no) cpnNo
+            ,(SELECT pcr.cpn_content FROM pla_cpn_r pcr WHERE pb.sp_no=pcr.sp_no) cpnContent
+            ,pb.start_date startDate
+            ,pb.end_date endDate
+            ,pb.is_used isUsedPB
+            ,pb.is_return isReturn
+        FROM
+             pla_bsc pb
+        WHERE
+            1 = 1
+        <if test="null != params.spName and '' != params.spName">
+            AND  pb.sp_name = #{params.spName}
+        </if>
+        <if test="null != params.conNo and '' != params.conNo">
+            AND  pb.con_no = #{params.conNo}
+        </if>
+        <if test="null != params.startDate and '' != params.startDate">
+            AND  <![CDATA[ pb.start_date >= #{params.startDate} ]]>
+        </if>
+        <if test="null != params.endDate and '' != params.endDate">
+            AND  <![CDATA[ pb.end_date <= #{params.endDate} ]]>
+        </if>
+        <if test="null != params.isUsedPB and '' != params.isUsedPB">
+            AND  pb.is_used = #{params.isUsedPB}
+        </if>
+        <if test="null != params.isReturn and '' != params.isReturn">
+            AND  pb.is_return = #{params.isReturn}
+        </if>
+        <if test="null != params.cpnNo and '' != params.cpnNo">
+            AND  pb.sp_no IN (SELECT a.sp_no FROM (SELECT pcr1.sp_no sp_no FROM pla_cpn_r pcr1 WHERE pcr1.cpn_no = #{params.cpnNo}) a)
+        </if>
+    </select>
+
+    <select id="findPlanInfoById" resultType="java.util.HashMap">
+        SELECT
+             pb.id pbId
+            ,pb.sp_no spNo
+            ,pb.sp_name spName
+            ,pb.con_no conNo
+            ,(SELECT con.con_name FROM sale_con con WHERE pb.con_no=con.con_no) conName
+            ,pb.dis_no disNo
+            ,(SELECT pre.dis_name FROM pre_info pre WHERE pb.dis_no=pre.dis_no) disName
+            ,pb.g_no gNo
+            ,(SELECT slgf.g_name FROM slgf_info slgf WHERE pb.g_no=slgf.g_no) gName
+            ,pb.lmt_no lmtNo
+            ,(SELECT lmt.lmt_name FROM lmt_info lmt WHERE pb.lmt_no=lmt.lmt_no) lmtName
+            ,(SELECT a.cpn_no FROM (SELECT pcr1.cpn_no cpn_no FROM pla_cpn_r pcr1 WHERE pcr1.sp_no = (SELECT pb1.sp_no FROM pla_bsc pb1 WHERE pb1.id = #{pbId})) a) cpnNo
+            ,(SELECT b.cpn_content FROM (SELECT pcr2.cpn_content cpn_content FROM pla_cpn_r pcr2 WHERE pcr2.sp_no = (SELECT pb2.sp_no FROM pla_bsc pb2 WHERE pb2.id = #{pbId})) b) cpnContent
+            ,pb.start_date startDate
+            ,pb.end_date endDate
+            ,pb.is_used isUsedPB
+            ,pb.is_return isReturn
+        FROM
+             pla_bsc pb
+        WHERE
+            1 = 1
+        AND
+            pb.id = #{pbId}
+    </select>
+
+    <update id="updatePlanInfoForm">
+        UPDATE
+            pla_bsc
+        SET
+             sp_name = #{params.spName}
+            ,con_no = #{params.conNo}
+            <if test="null != params.disNo and '' != params.disNo">
+                ,dis_no = #{params.disNo}
+                ,g_no = null
+            </if>
+            <if test="null != params.gNo and '' != params.gNo">
+                ,dis_no = null
+                ,g_no = #{params.gNo}
+            </if>
+            ,lmt_no = #{params.lmtNo}
+            ,start_date = #{params.startDate}
+            ,end_date = #{params.endDate}
+            ,is_used = #{params.isUsedPB}
+            ,is_return = #{params.isReturn}
+            ,mdf_date = now()
+            ,mdf_id = #{params.uId}
+        WHERE
+            id = #{params.pbId}
+    </update>
+
+    <update id="updatePlaCpnR">
+        UPDATE
+            pla_cpn_r
+        SET
+             cpn_no = #{params.cpnNo}
+            ,cpn_content = #{params.cpnContent}
+            ,mdf_date = now()
+            ,mdf_id = #{params.uId}
+        WHERE
+            sp_no = #{params.spNo}
+    </update>
+
+    <insert id="addPlaCpnR">
+        insert into pla_cpn_r
+        (
+             sp_no
+            ,cpn_no
+            ,cpn_content
+            ,use_date_begin
+            ,use_date_end
+            ,inst_date
+            ,inst_id
+        )
+        values
+        (
+             #{params.spNo}
+            ,#{params.cpnNo}
+            ,#{params.cpnContent}
+            ,#{params.useDateBegin}
+            ,#{params.useDateEnd}
+            ,now()
+            ,#{params.uId}
+        )
+    </insert>
+
+</mapper>  

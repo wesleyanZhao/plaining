@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lanou.cn.mapper.RESTMapper">
+
+    <select id="getSaleWay" parameterType="Map" resultType="Map">
+        SELECT
+            dis_no disNo
+            ,g_no gNo
+            ,con_no conNo
+            ,lmt_no lmtNo
+        FROM
+          pla_bsc
+        WHERE
+          sp_no=#{spNo}
+    </select>
+
+    <select id="getPlan" parameterType="Map" resultType="Map">
+        SELECT
+            con.con_type conType
+            ,con.con_name conName
+            ,con.con_value conValue
+            ,con.is_other_con_combine isOtherConCombine
+            ,con.segment segment
+            ,con.con_no conNo
+            ,sp.spNo spNo
+            ,sp.spName spName
+            ,sp.lmtNo lmtNo
+            ,sp.disNo disNo
+        FROM
+            sale_con con,
+            (
+                SELECT
+                    con_no conNo
+                    ,sp_no spNo
+                    ,sp_name spName
+                    ,lmt_no lmtNo
+                    ,dis_no disNo
+                FROM
+                  pla_bsc
+                WHERE
+                  <![CDATA[ start_date<=now() ]]>
+                  AND <![CDATA[ end_date>=now() ]]>
+                  AND sp_no IN (
+                    SELECT
+                      sp_no
+                    FROM
+                      sale_pro_r
+                    WHERE
+                        prd_no = #{prdNo}
+                )
+            ) sp
+        WHERE
+        <![CDATA[ con_vip_level<=#{level} ]]>
+        AND con_no = sp.conNo
+    </select>
+
+    <select id="getCpn" parameterType="Map" resultType="Map">
+        SELECT
+            cpn_no cpnNo
+            ,cpn_content cpnContent
+        FROM
+          pla_cpn_r
+        WHERE
+            sp_no IN (
+                SELECT
+                  sp_no
+                FROM
+                  sale_pro_r
+                WHERE
+                  prd_no=#{prdNo}
+            )
+    </select>
+
+    <select id="getCon" parameterType="String" resultType="Map">
+        SELECT
+          con_type conType
+          ,con_value conValue
+        FROM
+          sale_con
+        WHERE
+          con_no=#{conNo}
+    </select>
+
+    <select id="getPlanName" parameterType="String" resultType="Map">
+        SELECT
+            sp_name spName
+            ,sp_no spNo
+        FROM
+          pla_bsc
+        WHERE
+          con_no=#{conNo}
+    </select>
+
+    <select id="getGiftsNo" parameterType="String" resultType="Map">
+        SELECT
+          g_prd_no gPrdNo
+        FROM
+          slgf_info
+        WHERE
+          g_no=#{gNo}
+    </select>
+
+    <select id="getPre" resultType="Map">
+        SELECT
+          dis_value disValue
+        FROM
+          pre_info
+        WHERE
+          dis_no=#{disNo}
+    </select>
+
+    <select id="getLmt" parameterType="String" resultType="Map">
+        SELECT
+          lmt_type lmtType
+          ,lmt_count lmtCount
+        FROM
+          lmt_info
+        WHERE
+          lmt_no=#{lmtNo}
+    </select>
+</mapper>  

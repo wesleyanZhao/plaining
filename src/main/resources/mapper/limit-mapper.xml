@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lanou.cn.mapper.LimitMapper">
+    <select id="showLimit" resultType="java.util.HashMap">
+        select
+        id
+        ,lmt_no as lmtNo
+        ,lmt_name as lmtName
+        ,lmt_type as lmtType
+        ,lmt_count as lmtCount
+        ,is_used as isUsed
+        from
+        lmt_info
+        WHERE 1=1
+
+        <if test="null != params.lmtName and '' != params.lmtName">
+            and  lmt_name=#{params.lmtName}
+        </if>
+        <if test="null != params.lmtType and '' != params.lmtType and ' '.toString() != params.lmtType">
+            and lmt_type = #{params.lmtType}
+        </if>
+        <if test="null != params.isUsed and '' != params.isUsed and ' '.toString() != params.isUsed">
+            and is_used = #{params.isUsed}
+        </if>
+        order by id asc
+    </select>
+
+    <insert id="addLimit" parameterType="Map" >
+        insert into  lmt_info (
+        lmt_no
+        ,lmt_name
+        ,lmt_type
+        ,lmt_count
+        ,is_used
+        ,inst_date
+        ,inst_id
+        )
+        VALUES (
+        (select a.no from (select concat('100',IFNULL(max(id),0) + 1 ) no from lmt_info) a  )
+        ,#{lmtName}
+        ,#{lmtType}
+        ,#{lmtCount}
+        ,#{isUsed}
+        ,now()
+        ,#{instId}
+        )
+    </insert>
+</mapper>

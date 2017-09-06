@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.lanou.cn.mapper.SaleMapper">
+    <insert id="insertSaleValue">
+        insert
+        into
+        sale_con(
+        con_no
+        ,con_name
+        ,con_type
+        ,sp_sl_type
+        <if test="''!=params.supId and null !=params.supId and '0'.toString() != params.supId">
+            ,sup_id
+        </if>
+        ,segment
+        ,con_vip_level
+        ,con_value
+        ,is_other_con_combine
+        ,is_used
+        ,inst_date
+        ,inst_id
+        )
+        VALUES
+        (
+        (SELECT * FROM (SELECT concat('100',ifnull(max(id),0) + 1) FROM sale_con) info)
+        ,#{params.conName}
+        ,#{params.conType}
+        ,#{params.spSlType}
+        <if test="''!=params.supId and null !=params.supId and '0'.toString() != params.supId">
+            ,#{params.supId}
+        </if>
+        ,#{params.segment}
+        ,#{params.conVipLevel}
+        ,#{params.conValue}
+        ,#{params.isOtherConCombine}
+        ,#{params.isUsed}
+        ,now()
+        ,#{params.uId}
+        )
+
+    </insert>
+
+
+    <select id="saleManagePage" resultType="java.util.HashMap">
+        SELECT
+        scon.id                    as  Id
+        ,scon.con_no                as  conNo
+        ,scon.con_name              as  conName
+        ,scon.con_type              as  conType
+        ,scon.sp_sl_type            as  spSlType
+        ,(select sfo.sup_name from sup_info_syn sfo where sfo.id=scon.sup_id)           as  supName
+        ,scon.segment               as  segment
+        ,scon.con_vip_level         as  conVipLevel
+        ,scon.con_value             as  conValue
+        ,scon.is_other_con_combine  as  isOtherConCombine
+        ,scon.is_used               as  isUsed
+        FROM
+        sale_con scon
+        <if test="null !=params.supId and ''!=params.supId and '0'.toString() != params.supId">
+            ,sup_info_syn sfo
+        </if>
+        WHERE
+        scon.con_no=scon.con_no
+        <if test="null !=params.supId and ''!=params.supId and '0'.toString() != params.supId">
+            AND sfo.id=scon.sup_id
+        </if>
+
+        <if test="null != params.conNo and '' != params.conNo and '0'.toString() != params.conNo">
+            AND  scon.con_no = #{params.conNo}
+        </if>
+
+        <if test="null != params.conName and '' != params.conName and '0'.toString() != params.conName">
+            AND  scon.con_name = #{params.conName}
+        </if>
+
+        <if test="null != params.conType and '' != params.conType and '0'.toString() != params.conType">
+            AND  scon.con_type = #{params.conType}
+        </if>
+
+        <if test="null != params.spSlType and '' != params.spSlType and '0'.toString() != params.spSlType">
+            AND  scon.sp_sl_type = #{params.spSlType}
+        </if>
+
+        <if test="null !=params.supId and ''!=params.supId and '0'.toString() != params.supId">
+            AND  sfo.id=#{params.supId}
+        </if>
+
+        <if test="null != params.segment and '' != params.segment and '0'.toString() != params.segment">
+            AND  scon.segment = #{params.segment}
+        </if>
+
+        <if test="null != params.conVipLevel and '' != params.conVipLevel and '0'.toString() != params.conVipLevel">
+            AND  scon.con_vip_level = #{params.conVipLevel}
+        </if>
+
+        <if test="null != params.conValue and '' != params.conValue and '0'.toString() != params.conValue">
+            AND  scon.con_value= #{params.conValue}
+        </if>
+
+        <if test="null != params.isOtherConCombine and '' != params.isOtherConCombine and '0'.toString() !=params.isOtherConCombine">
+            AND  scon.is_other_con_combine = #{params.isOtherConCombine}
+        </if>
+
+        <if test="null != params.isUsed and '' != params.isUsed and '0'.toString() != params.isUsed">
+            AND  scon.is_used = #{params.isUsed}
+        </if>
+        order by id asc
+    </select>
+
+    <select id="saleSelectUpdata" resultType="java.util.HashMap">
+        SELECT
+        id                         as  Id
+        ,con_no                     as  conNo
+        ,con_name                   as  conName
+        ,con_type                   as  conType
+        ,sp_sl_type                 as  spSlType
+        ,sup_id                     as  supId
+        ,segment                    as  segment
+        ,con_vip_level              as  conVipLevel
+        ,con_value                  as  conValue
+        ,is_other_con_combine       as  isOtherConCombine
+        ,is_used                    as  isUsed
+        FROM
+        sale_con
+        WHERE
+        id=#{id}
+    </select>
+
+    <update id="saleUpdata" >
+        UPDATE
+        sale_con
+        SET
+        con_no                     =#{params.conNo}
+        ,con_name                   =#{params.conName}
+        ,con_type                   =#{params.conType}
+        ,sp_sl_type                 =#{params.spSlType}
+        ,sup_id                     =#{params.supId}
+        ,segment                    =#{params.segment}
+        ,con_vip_level              =#{params.conVipLevel}
+        ,con_value                  =#{params.conValue}
+        ,is_other_con_combine       =#{params.isOtherConCombine}
+        ,is_used                    =#{params.isUsed}
+        ,mdf_date                   =now()
+        ,mdf_id                     =#{params.uId}
+        WHERE
+        id                          =#{params.id}
+    </update>
+</mapper>

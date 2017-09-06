@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" ?>  
+<!DOCTYPE mapper  
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">  
+<mapper namespace="com.lanou.cn.mapper.PerferentialMapper">
+
+
+    <!--在优惠信息表插入数据-->
+    <insert id="addPerferential" parameterType="Map">
+
+        insert into
+          pre_info
+            (
+                 dis_no
+                ,dis_name
+                ,con_no
+                ,dis_value
+                ,inst_date
+                ,inst_id
+            )
+        values
+        (
+              (
+                SELECT info.no FROM (SELECT concat('100',ifnull(max(id),0) + 1) no FROM pre_info) info
+              )
+              ,#{params.disName}
+              ,(
+                  select
+                      con_no
+                  from
+                      sale_con
+                  where
+                      con_name=#{params.conName}
+                  and con_type=#{params.conType}
+                )
+              ,#{params.disValue}
+              ,now()
+              ,#{params.uId}
+        )
+    </insert>
+
+    <!--添加优惠信息时查询条件名称-->
+    <select id="getConditionName" resultType="java.util.Map">
+        select
+            distinct con_name name
+        from
+            sale_con
+        where
+            con_type = #{params.conType}
+
+    </select>
+
+    <!--优惠信息分页管理-->
+    <select id="findPerferential" resultType="Map">
+        select
+           info.id
+          ,info.dis_no disNo
+          ,info.dis_name disName
+          ,info.con_no conNo
+          ,info.dis_value disValue
+          ,con.con_name conName
+          ,con.con_type conType
+        from
+          pre_info info,sale_con con
+        where 1=1
+            and info.con_no=con.con_no
+        <if test="params.disName != null and params.disName != ''">
+            AND info.dis_name=#{params.disName}
+        </if>
+        <if test="null != params.disValue1 and '' != params.disValue1 and null != params.disValue2 and '' != params.disValue2">
+            and info.dis_value between #{params.disValue1} and #{params.disValue2}
+        </if>
+        <if test="null != params.disValue1 and '' != params.disValue1">
+            and info.dis_value >= #{params.disValue1}
+        </if>
+        <if test="null != params.disValue2 and '' != params.disValue2">
+            and #{params.disValue2} >= info.dis_value
+        </if>
+        <if test="params.conType != null and params.conType != '' and '666' != params.conType">
+            AND con.con_type=#{params.conType}
+        </if>
+        <if test="params.conName != null and params.conName != '' and '666' != params.conName">
+            AND con.con_name=#{params.conName}
+        </if>
+            order by id asc
+    </select>
+
+    <!--优惠条件查询-->
+    <select id="findConditionsName" resultType="java.util.Map">
+        select
+          con_name
+         ,id
+        from
+          sale_con
+        where
+          con_type in(
+                    select
+                      con_type
+                    FROM
+                      sale_con
+                    where
+                      con_no=#{params.conNo}
+                   )
+    </select>
+
+    <!--优惠条件名称-->
+    <select id="getConName" resultType="java.util.Map">
+        select
+            con_name conName
+            ,id
+        from
+            sale_con
+        where
+            con_type=#{params.conType}
+    </select>
+
+    <!--更改优惠信息表数据-->
+    <update id="perferentialUpdate" parameterType="Map">
+        UPDATE
+        pre_info
+        SET
+         dis_name=#{params.disName}
+        ,dis_value=#{params.disValue}
+        ,con_no=(
+                 select
+                    con_no
+                 from
+                     sale_con
+                 where
+                     con_name=#{params.conName}
+                 and con_type=#{params.conType}
+                )
+        ,mdf_date=now()
+        ,mdf_id=#{params.uId}
+         WHERE
+            id=#{params.id}
+    </update>
+
+</mapper>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>  
+<!DOCTYPE mapper  
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">  
+<mapper namespace="com.lanou.cn.mapper.MenuMapper">
+
+    <insert id="addMenu" parameterType="Map">
+        INSERT INTO
+          menu
+          (
+            p_id
+            ,name
+            ,url
+            ,is_used
+          )
+        VALUES
+        (
+          <if test="'' != organizationOne">#{organizationOne}</if>
+          <if test="'' == organizationOne">0</if>
+          ,#{name}
+          ,#{url}
+          ,'y'
+        )
+
+    </insert>
+
+    <select id="getFirstMenu" resultType="Map">
+        SELECT
+          id
+          ,name
+        FROM
+          menu
+        WHERE
+          p_id = 0;
+    </select>
+
+    <select id="getMenu" parameterType="Map" resultType="Map">
+        SELECT
+          m.id
+          ,p_id pId
+          ,(
+            SELECT name FROM menu mm WHERE mm.id=m.p_id
+        ) pname
+          ,m.name
+          ,m.url
+          ,m.is_used isUsed
+        FROM
+          menu m
+        WHERE 1 = 1
+        <if test="id != null and id != ''">AND m.id=#{id}</if>
+        <if test="organization != null and organization != ''">
+            <if test="organization == 1">AND m.p_id=0</if>
+            <if test="organization == 2">AND <![CDATA[ m.p_id <> 0]]></if>
+        </if>
+        <if test="name != null and name != ''">
+            AND m.name LIKE '%${name}%'
+        </if>
+        <if test="url != null and url != ''">
+            AND m.url = #{url}
+        </if>
+        <if test="isUsed != null and isUsed != ''">
+            <if test="isUsed == 'y'.toString()">AND m.is_used = #{isUsed}</if>
+            <if test="isUsed == 'n'.toString()">AND m.is_used = #{isUsed}</if>
+        </if>
+        ORDER BY m.id ASC
+    </select>
+
+    <update id="modifyMenu" parameterType="Map">
+        UPDATE
+          menu
+        SET
+          name=#{name}
+          <if test="url != null and url != ''">
+              ,url=#{url}
+          </if>
+          ,is_used=#{isUsed}
+          <if test="organization != null and organization != ''">
+              <if test="organization == 2">,p_id=#{organizationOne}</if>
+              <if test="organization == 1">,p_id=0</if>
+          </if>
+        WHERE
+          id=#{id}
+    </update>
+
+</mapper>  
